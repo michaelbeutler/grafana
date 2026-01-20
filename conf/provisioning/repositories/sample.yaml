@@ -1,0 +1,128 @@
+# GitSync Repository Provisioning Configuration
+# This file allows you to configure GitSync repositories via file-based provisioning.
+# Place your repository configurations in /etc/grafana/provisioning/repositories/
+#
+# Requires feature toggles:
+#   - provisioning = true
+#
+# For alerting rules support, also enable:
+#   - kubernetesAlertingRules = true
+
+apiVersion: 1
+
+# List of repositories to provision
+repositories:
+  # Example: Local repository (for development/testing)
+  # - name: my-local-repo
+  #   title: My Local Repository
+  #   description: Local repository for testing
+  #   type: local
+  #   local:
+  #     path: /var/lib/grafana/git-repos/my-repo
+  #   sync:
+  #     enabled: true
+  #     target: folder           # 'folder' or 'instance'
+  #     intervalSeconds: 60      # polling interval
+  #     allowsEdits: false       # hybrid mode: allow UI-created resources in synced folder
+
+  # Example: GitHub repository with token authentication
+  # - name: my-github-repo
+  #   title: My GitHub Repository
+  #   description: GitHub repository for dashboards and alerts
+  #   type: github
+  #   github:
+  #     owner: my-org
+  #     repository: grafana-configs
+  #     branch: main
+  #     path: grafana/           # subdirectory within repository
+  #     token: ${GITHUB_TOKEN}   # use environment variable
+  #     generatePreviewLinks: true
+  #   sync:
+  #     enabled: true
+  #     target: folder
+  #     intervalSeconds: 300
+  #   workflow:
+  #     writeDirect: false       # use PRs for changes
+  #     branch: grafana-sync     # branch for changes
+  #     prLabels:
+  #       - grafana
+  #       - auto-sync
+
+  # Example: GitHub repository with GitHub App authentication
+  # - name: my-github-app-repo
+  #   title: GitHub App Repository
+  #   description: GitHub repository using GitHub App authentication
+  #   type: github
+  #   github:
+  #     owner: my-org
+  #     repository: grafana-configs
+  #     branch: main
+  #     appId: 123456
+  #     installationId: 789012
+  #     privateKey: ${GITHUB_APP_PRIVATE_KEY}
+  #   sync:
+  #     enabled: true
+  #     target: instance
+  #     intervalSeconds: 600
+
+  # Example: Hybrid mode repository (dashboards from Git, alert rules from UI)
+  # This enables creating alert rules via the Grafana UI in the synced folder
+  # - name: my-hybrid-repo
+  #   title: Hybrid Mode Repository
+  #   description: Dashboards synced from Git, alert rules created in UI
+  #   type: github
+  #   github:
+  #     owner: my-org
+  #     repository: grafana-dashboards
+  #     branch: main
+  #     token: ${GITHUB_TOKEN}
+  #   sync:
+  #     enabled: true
+  #     target: folder
+  #     intervalSeconds: 300
+  #     allowsEdits: true        # Enable hybrid mode for UI-created alert rules
+
+  # Example: GitLab repository
+  # - name: my-gitlab-repo
+  #   title: My GitLab Repository
+  #   description: GitLab repository for dashboards
+  #   type: gitlab
+  #   gitlab:
+  #     url: https://gitlab.com/my-org/grafana-configs.git
+  #     branch: main
+  #     path: grafana/
+  #     token: ${GITLAB_TOKEN}
+  #   sync:
+  #     enabled: true
+  #     target: folder
+  #     intervalSeconds: 300
+
+  # Example: Bitbucket repository
+  # - name: my-bitbucket-repo
+  #   title: My Bitbucket Repository
+  #   description: Bitbucket repository for dashboards
+  #   type: bitbucket
+  #   bitbucket:
+  #     url: https://bitbucket.org/my-org/grafana-configs.git
+  #     branch: main
+  #     token: ${BITBUCKET_TOKEN}
+  #   sync:
+  #     enabled: true
+  #     target: folder
+
+  # Example: Generic Git repository
+  # - name: my-git-repo
+  #   title: My Git Repository
+  #   description: Generic Git repository
+  #   type: git
+  #   git:
+  #     url: https://git.example.com/my-org/grafana-configs.git
+  #     branch: main
+  #     token: ${GIT_TOKEN}
+  #   sync:
+  #     enabled: true
+  #     target: folder
+
+# List of repositories to delete (by name)
+# deleteRepositories:
+#   - name: old-repo-to-remove

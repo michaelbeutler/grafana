@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -143,5 +144,112 @@ spec:
 				require.Equal(t, tc.expectedFolder, annotations["grafana.app/folder"], "folder annotation should match expected")
 			})
 		}
+	})
+}
+
+func TestParserAlertRules(t *testing.T) {
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, alertingv0alpha1.AlertRuleResourceInfo.GroupVersionKind()).
+		Return(nil, alertingv0alpha1.AlertRuleResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", mock.Anything, alertingv0alpha1.RecordingRuleResourceInfo.GroupVersionKind()).
+		Return(nil, alertingv0alpha1.RecordingRuleResourceInfo.GroupVersionResource(), nil).Maybe()
+
+	parser := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "xxx",
+				Name:      "repo",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		},
+	}
+
+	t.Run("alert rule parsing", func(t *testing.T) {
+		alertRule, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "alerts/test-alert.yaml",
+			Data: []byte(`apiVersion: rules.alerting.grafana.app/v0alpha1
+kind: AlertRule
+metadata:
+  name: test-alert-rule
+spec:
+  title: Test Alert Rule
+  noDataState: NoData
+  execErrState: Error
+  trigger:
+    interval: 1m
+  expressions:
+    A:
+      queryType: query
+      datasourceUID: datasource-uid
+      source: true
+      model:
+        refId: A
+        expr: up == 0
+      relativeTimeRange:
+        from: 5m
+        to: 0s
+`),
+		})
+		require.NoError(t, err)
+		require.Equal(t, "test-alert-rule", alertRule.Obj.GetName())
+		require.Equal(t, "rules.alerting.grafana.app", alertRule.GVK.Group)
+		require.Equal(t, "v0alpha1", alertRule.GVK.Version)
+		require.Equal(t, "AlertRule", alertRule.GVK.Kind)
+		require.Equal(t, "rules.alerting.grafana.app", alertRule.GVR.Group)
+		require.Equal(t, "v0alpha1", alertRule.GVR.Version)
+		require.Equal(t, "alertrules", alertRule.GVR.Resource)
+
+		// Verify folder is set from path
+		expectedFolder := ParseFolder("alerts/", "repo").ID
+		require.Equal(t, expectedFolder, alertRule.Meta.GetFolder(), "folder should be set from file path")
+	})
+
+	t.Run("recording rule parsing", func(t *testing.T) {
+		recordingRule, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "recording/test-recording.yaml",
+			Data: []byte(`apiVersion: rules.alerting.grafana.app/v0alpha1
+kind: RecordingRule
+metadata:
+  name: test-recording-rule
+spec:
+  title: Test Recording Rule
+  metric: test_metric
+  targetDatasourceUID: prometheus
+  trigger:
+    interval: 1m
+  expressions:
+    A:
+      queryType: query
+      datasourceUID: datasource-uid
+      source: true
+      model:
+        refId: A
+        expr: sum(rate(http_requests_total[5m]))
+      relativeTimeRange:
+        from: 5m
+        to: 0s
+`),
+		})
+		require.NoError(t, err)
+		require.Equal(t, "test-recording-rule", recordingRule.Obj.GetName())
+		require.Equal(t, "rules.alerting.grafana.app", recordingRule.GVK.Group)
+		require.Equal(t, "v0alpha1", recordingRule.GVK.Version)
+		require.Equal(t, "RecordingRule", recordingRule.GVK.Kind)
+		require.Equal(t, "rules.alerting.grafana.app", recordingRule.GVR.Group)
+		require.Equal(t, "v0alpha1", recordingRule.GVR.Version)
+		require.Equal(t, "recordingrules", recordingRule.GVR.Resource)
+
+		// Verify folder is set from path
+		expectedFolder := ParseFolder("recording/", "repo").ID
+		require.Equal(t, expectedFolder, recordingRule.Meta.GetFolder(), "folder should be set from file path")
 	})
 }

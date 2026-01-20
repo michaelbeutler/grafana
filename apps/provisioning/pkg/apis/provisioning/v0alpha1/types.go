@@ -297,6 +297,11 @@ type SyncOptions struct {
 
 	// When non-zero, the sync will run periodically
 	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
+
+	// AllowsEdits enables hybrid mode where users can create/edit resources (e.g., alert rules)
+	// in the synced folder via the UI, even though the folder is managed by Git Sync.
+	// When false (default), all resources in the folder must come from the repository.
+	AllowsEdits bool `json:"allowsEdits,omitempty"`
 }
 
 // The status of a Repository.

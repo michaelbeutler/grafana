@@ -14,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -34,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
+	prov_repositories "github.com/grafana/grafana/pkg/services/provisioning/repositories"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -64,6 +67,8 @@ func ProvideService(
 	dual dualwrite.Service,
 	promTypeMigrationProvider promtypemigration.PromTypeMigrationProvider,
 	serverLockService *serverlock.ServerLockService,
+	restConfigProvider apiserver.RestConfigProvider,
+	features featuremgmt.FeatureToggles,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -77,6 +82,7 @@ func ProvideService(
 		provisionDatasources:         datasources.Provision,
 		provisionPlugins:             plugins.Provision,
 		provisionAlerting:            prov_alerting.Provision,
+		provisionRepositories:        prov_repositories.Provision,
 		dashboardProvisioningService: dashboardProvisioningService,
 		dashboardService:             dashboardService,
 		datasourceService:            datasourceService,
@@ -92,6 +98,8 @@ func ProvideService(
 		migratePrometheusType:        promTypeMigrationProvider.Run,
 		dual:                         dual,
 		serverLock:                   serverLockService,
+		restConfigProvider:           restConfigProvider,
+		features:                     features,
 	}
 
 	s.NamedService = services.NewBasicService(s.starting, s.running, nil).WithName(ServiceName)
@@ -135,6 +143,13 @@ func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
 			return err
 		}
 	}
+
+	// Provision GitSync repositories (only if the feature is enabled)
+	if err := ps.ProvisionRepositories(ctx); err != nil {
+		ps.log.Error("Failed to provision repositories", "error", err)
+		// Don't fail startup if repository provisioning fails - it's optional
+	}
+
 	return nil
 }
 
@@ -224,6 +239,7 @@ type ProvisioningServiceImpl struct {
 	provisionDatasources         func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error
 	provisionPlugins             func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error
 	provisionAlerting            func(context.Context, prov_alerting.ProvisionerConfig) error
+	provisionRepositories        func(context.Context, prov_repositories.ProvisionerConfig) error
 	mutex                        sync.Mutex
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService
 	dashboardService             dashboardservice.DashboardService
@@ -238,6 +254,8 @@ type ProvisioningServiceImpl struct {
 	dual                         dualwrite.Service
 	serverLock                   *serverlock.ServerLockService
 	migratePrometheusType        func(context.Context) error
+	restConfigProvider           apiserver.RestConfigProvider
+	features                     featuremgmt.FeatureToggles
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -346,6 +364,30 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		TemplateService:            *templateService,
 	}
 	return ps.provisionAlerting(ctx, cfg)
+}
+
+func (ps *ProvisioningServiceImpl) ProvisionRepositories(ctx context.Context) error {
+	// Only provision repositories if the provisioning feature is enabled
+	if !ps.features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		ps.log.Debug("Repository provisioning skipped - provisioning feature not enabled")
+		return nil
+	}
+
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
+
+	repositoriesPath := filepath.Join(ps.Cfg.ProvisioningPath, "repositories")
+	cfg := prov_repositories.ProvisionerConfig{
+		Path:               repositoriesPath,
+		RestConfigProvider: ps.restConfigProvider,
+	}
+
+	if err := ps.provisionRepositories(ctx, cfg); err != nil {
+		err = fmt.Errorf("%v: %w", "Repository provisioning error", err)
+		ps.log.Error("Failed to provision repositories", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {

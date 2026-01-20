@@ -1,0 +1,28 @@
+apiVersion: rules.alerting.grafana.app/v0alpha1
+kind: AlertRule
+metadata:
+  name: test-alert-rule
+  namespace: default
+  annotations:
+    grafana.app/folder: test-alert-folder
+spec:
+  title: "Test Alert Rule from GitSync"
+  noDataState: NoData
+  execErrState: Error
+  trigger:
+    interval: 1m
+  expressions:
+    A:
+      queryType: query
+      datasourceUID: "datasource-uid"
+      source: true
+      model:
+        refId: A
+        datasource:
+          type: prometheus
+          uid: "datasource-uid"
+        expr: up == 0
+        instant: true
+      relativeTimeRange:
+        from: 5m
+        to: 0s

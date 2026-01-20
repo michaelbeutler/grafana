@@ -61,6 +61,11 @@ type Folder struct {
 	// NOTE: this is only populated when folders are managed by unified storage
 	// This is not ever used by xorm, but the translation functions flow through this type
 	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
+
+	// AllowsEdits indicates whether the manager allows edits to resources in this folder.
+	// When true, users can create/edit alert rules in this folder even if it's managed by GitSync.
+	// NOTE: this is only populated when folders are managed by unified storage
+	AllowsEdits bool `json:"allowsEdits,omitempty"`
 }
 
 type FolderReference struct {
@@ -73,6 +78,11 @@ type FolderReference struct {
 	// When the folder belongs to a repository
 	// NOTE: this is only populated when folders are managed by unified storage
 	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
+
+	// AllowsEdits indicates whether the manager allows edits to resources in this folder.
+	// When true, users can create/edit alert rules in this folder even if it's managed by GitSync.
+	// NOTE: this is only populated when folders are managed by unified storage
+	AllowsEdits bool `json:"allowsEdits,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -103,11 +113,12 @@ func (f *Folder) WithURL() *Folder {
 
 func (f *Folder) ToFolderReference() *FolderReference {
 	return &FolderReference{
-		ID:        f.ID,
-		UID:       f.UID,
-		Title:     f.Title,
-		ParentUID: f.ParentUID,
-		ManagedBy: f.ManagedBy,
+		ID:          f.ID,
+		UID:         f.UID,
+		Title:       f.Title,
+		ParentUID:   f.ParentUID,
+		ManagedBy:   f.ManagedBy,
+		AllowsEdits: f.AllowsEdits,
 	}
 }
 
