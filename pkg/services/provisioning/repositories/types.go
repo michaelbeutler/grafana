@@ -143,11 +143,11 @@ type gitConfigV1 struct {
 }
 
 type workflowConfigV1 struct {
-	WriteDirect   values.BoolValue      `json:"writeDirect" yaml:"writeDirect"`
-	Branch        values.StringValue    `json:"branch" yaml:"branch"`
-	PRLabels      values.JSONSliceValue `json:"prLabels" yaml:"prLabels"`
-	PRAssignees   values.JSONSliceValue `json:"prAssignees" yaml:"prAssignees"`
-	CommitMessage values.StringValue    `json:"commitMessage" yaml:"commitMessage"`
+	WriteDirect   values.BoolValue   `json:"writeDirect" yaml:"writeDirect"`
+	Branch        values.StringValue `json:"branch" yaml:"branch"`
+	PRLabels      []string           `json:"prLabels" yaml:"prLabels"`
+	PRAssignees   []string           `json:"prAssignees" yaml:"prAssignees"`
+	CommitMessage values.StringValue `json:"commitMessage" yaml:"commitMessage"`
 }
 
 type deleteRepositoryConfigV1 struct {
@@ -230,24 +230,8 @@ func (cfg *configsV1) mapToRepositoryFromConfig(apiVersion int64) *configs {
 			normalized.WorkflowWriteDirect = repo.Workflow.WriteDirect.Value()
 			normalized.WorkflowBranch = repo.Workflow.Branch.Value()
 			normalized.WorkflowCommitMessage = repo.Workflow.CommitMessage.Value()
-
-			// Convert labels and assignees
-			if labels := repo.Workflow.PRLabels.Value(); len(labels) > 0 {
-				normalized.WorkflowPRLabels = make([]string, 0, len(labels))
-				for _, l := range labels {
-					if s, ok := l.(string); ok {
-						normalized.WorkflowPRLabels = append(normalized.WorkflowPRLabels, s)
-					}
-				}
-			}
-			if assignees := repo.Workflow.PRAssignees.Value(); len(assignees) > 0 {
-				normalized.WorkflowPRAssignees = make([]string, 0, len(assignees))
-				for _, a := range assignees {
-					if s, ok := a.(string); ok {
-						normalized.WorkflowPRAssignees = append(normalized.WorkflowPRAssignees, s)
-					}
-				}
-			}
+			normalized.WorkflowPRLabels = repo.Workflow.PRLabels
+			normalized.WorkflowPRAssignees = repo.Workflow.PRAssignees
 		}
 
 		r.Repositories = append(r.Repositories, normalized)
