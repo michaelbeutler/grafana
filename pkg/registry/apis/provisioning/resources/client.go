@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -26,12 +27,14 @@ var (
 	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
+	AlertRuleResource         = alertingv0alpha1.AlertRuleResourceInfo.GroupVersionResource()
+	RecordingRuleResource     = alertingv0alpha1.RecordingRuleResourceInfo.GroupVersionResource()
 
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
-	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
+	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource, AlertRuleResource, RecordingRuleResource}
 
 	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
-	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
+	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource(), AlertRuleResource.GroupResource(), RecordingRuleResource.GroupResource()}
 )
 
 // ClientFactory is a factory for creating clients for a given namespace
