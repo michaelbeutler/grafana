@@ -410,7 +410,8 @@ func (n Namespace) ValidateForRuleStorage() error {
 	if n.UID == "" {
 		return fmt.Errorf("cannot store rules in folder without UID")
 	}
-	if n.ManagedBy == utils.ManagerKindRepo {
+	// Allow storing rules if the manager allows edits (hybrid mode)
+	if n.ManagedBy == utils.ManagerKindRepo && !n.AllowsEdits {
 		return fmt.Errorf("cannot store rules in folder managed by Git Sync")
 	}
 	return nil

@@ -160,7 +160,7 @@ func (p *provisioner) buildRepositoryObject(repo *repositoryFromConfig) *unstruc
 	spec := obj.Object["spec"].(map[string]interface{})
 
 	// Add sync configuration
-	if repo.SyncEnabled || repo.SyncTarget != "" || repo.SyncIntervalSeconds > 0 {
+	if repo.SyncEnabled || repo.SyncTarget != "" || repo.SyncIntervalSeconds > 0 || repo.SyncAllowsEdits {
 		syncConfig := map[string]interface{}{
 			"enabled": repo.SyncEnabled,
 		}
@@ -169,6 +169,9 @@ func (p *provisioner) buildRepositoryObject(repo *repositoryFromConfig) *unstruc
 		}
 		if repo.SyncIntervalSeconds > 0 {
 			syncConfig["intervalSeconds"] = repo.SyncIntervalSeconds
+		}
+		if repo.SyncAllowsEdits {
+			syncConfig["allowsEdits"] = repo.SyncAllowsEdits
 		}
 		spec["sync"] = syncConfig
 	}

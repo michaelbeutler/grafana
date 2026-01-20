@@ -155,8 +155,9 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 	meta.SetManagerProperties(utils.ManagerProperties{
-		Kind:     utils.ManagerKindRepo,
-		Identity: cfg.GetName(),
+		Kind:        utils.ManagerKindRepo,
+		Identity:    cfg.GetName(),
+		AllowsEdits: cfg.Spec.Sync.AllowsEdits,
 	})
 	meta.SetSourceProperties(utils.SourceProperties{
 		Path: folder.Path,

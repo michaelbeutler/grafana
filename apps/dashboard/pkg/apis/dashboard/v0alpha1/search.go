@@ -81,8 +81,9 @@ type DashboardHit struct {
 }
 
 type ManagedBy struct {
-	Kind utils.ManagerKind `json:"kind"`
-	ID   string            `json:"id,omitempty"`
+	Kind        utils.ManagerKind `json:"kind"`
+	ID          string            `json:"id,omitempty"`
+	AllowsEdits bool              `json:"allowsEdits,omitempty"`
 }
 
 func (m ManagedBy) IsZero() bool {

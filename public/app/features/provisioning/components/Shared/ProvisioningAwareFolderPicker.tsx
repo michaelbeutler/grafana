@@ -88,8 +88,9 @@ function getExcludeUIDs({
     if (!provisioningEnabled) {
       return [];
     }
-    // If provisioning is enabled, we want to exclude all provisioned folders
-    return settingsData?.items.map((repo) => repo.name) || [];
+    // If provisioning is enabled, we want to exclude provisioned folders that don't allow edits
+    // Folders with allowsEdits=true (hybrid mode) should still be selectable for alert rules etc.
+    return settingsData?.items.filter((repo) => !repo.allowsEdits).map((repo) => repo.name) || [];
   }
 
   return [];

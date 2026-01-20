@@ -35,6 +35,10 @@ type RepositoryView struct {
 	// When syncing, where values are saved
 	Target SyncTargetType `json:"target"`
 
+	// AllowsEdits enables hybrid mode where users can create/edit resources (e.g., alert rules)
+	// in the synced folder via the UI, even though the folder is managed by Git Sync.
+	AllowsEdits bool `json:"allowsEdits,omitempty"`
+
 	// For git, this is the target branch
 	Branch string `json:"branch,omitempty"`
 

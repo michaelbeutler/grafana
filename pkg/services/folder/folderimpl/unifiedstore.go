@@ -272,11 +272,12 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 
 		f := &folder.FolderReference{
-			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-			UID:       item.Name,
-			Title:     item.Title,
-			ParentUID: item.Folder,
-			ManagedBy: item.ManagedBy.Kind,
+			ID:          item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:         item.Name,
+			Title:       item.Title,
+			ParentUID:   item.Folder,
+			ManagedBy:   item.ManagedBy.Kind,
+			AllowsEdits: item.ManagedBy.AllowsEdits,
 		}
 		hits = append(hits, f)
 	}

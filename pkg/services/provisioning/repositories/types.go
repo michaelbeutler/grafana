@@ -27,6 +27,7 @@ type repositoryFromConfig struct {
 	SyncEnabled         bool
 	SyncTarget          string // folder, instance
 	SyncIntervalSeconds int64
+	SyncAllowsEdits     bool // hybrid mode: allow UI edits in synced folders
 
 	// Local repository settings
 	LocalPath string
@@ -99,6 +100,7 @@ type syncConfigV1 struct {
 	Enabled         values.BoolValue   `json:"enabled" yaml:"enabled"`
 	Target          values.StringValue `json:"target" yaml:"target"`
 	IntervalSeconds values.Int64Value  `json:"intervalSeconds" yaml:"intervalSeconds"`
+	AllowsEdits     values.BoolValue   `json:"allowsEdits" yaml:"allowsEdits"` // hybrid mode: allow UI edits in synced folders
 }
 
 type localConfigV1 struct {
@@ -177,6 +179,7 @@ func (cfg *configsV1) mapToRepositoryFromConfig(apiVersion int64) *configs {
 			normalized.SyncEnabled = repo.Sync.Enabled.Value()
 			normalized.SyncTarget = repo.Sync.Target.Value()
 			normalized.SyncIntervalSeconds = repo.Sync.IntervalSeconds.Value()
+			normalized.SyncAllowsEdits = repo.Sync.AllowsEdits.Value()
 		}
 
 		// Local settings

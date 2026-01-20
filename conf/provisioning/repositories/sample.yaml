@@ -23,6 +23,7 @@ repositories:
   #     enabled: true
   #     target: folder           # 'folder' or 'instance'
   #     intervalSeconds: 60      # polling interval
+  #     allowsEdits: false       # hybrid mode: allow UI-created resources in synced folder
 
   # Example: GitHub repository with token authentication
   # - name: my-github-repo
@@ -63,6 +64,23 @@ repositories:
   #     enabled: true
   #     target: instance
   #     intervalSeconds: 600
+
+  # Example: Hybrid mode repository (dashboards from Git, alert rules from UI)
+  # This enables creating alert rules via the Grafana UI in the synced folder
+  # - name: my-hybrid-repo
+  #   title: Hybrid Mode Repository
+  #   description: Dashboards synced from Git, alert rules created in UI
+  #   type: github
+  #   github:
+  #     owner: my-org
+  #     repository: grafana-dashboards
+  #     branch: main
+  #     token: ${GITHUB_TOKEN}
+  #   sync:
+  #     enabled: true
+  #     target: folder
+  #     intervalSeconds: 300
+  #     allowsEdits: true        # Enable hybrid mode for UI-created alert rules
 
   # Example: GitLab repository
   # - name: my-gitlab-repo
